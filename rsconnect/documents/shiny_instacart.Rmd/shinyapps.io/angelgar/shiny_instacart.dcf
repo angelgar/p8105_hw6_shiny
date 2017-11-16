@@ -1,0 +1,10 @@
+name: shiny_instacart
+title:
+username:
+account: angelgar
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 236041
+bundleId: 1078097
+url: https://angelgar.shinyapps.io/shiny_instacart/
+when: 1510802740.38714
