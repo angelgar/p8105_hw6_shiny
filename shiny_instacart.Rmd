@@ -16,7 +16,9 @@ library(janitor)
 library(stringr)
 library(forcats)
 library(viridis)
+library(ggplot2)
 library(plotly)
+library(ggridges)
 library(magrittr)
 library(readr)
 library(scales)
@@ -51,12 +53,12 @@ departments = instacart %>%
 selectInput("department_choice", label = h3("Select Department"),
             choices = departments, selected = "produce")
 
-## sliderInput widget
+# sliderInput widget
 min_hour = instacart %>% distinct(order_hour_of_day) %>% min()
 max_hour = instacart %>% distinct(order_hour_of_day) %>% max()
   
 sliderInput("time_day", label = h3("Choose hour of the day"), min = min_hour, 
-        max = max_hour, value = c(10, 17), step = 1)
+        max = max_hour, value = c(10, 18), step = 1)
 
 
 ```
@@ -64,7 +66,7 @@ sliderInput("time_day", label = h3("Choose hour of the day"), min = min_hour,
 Row {.tabset .tabset-fade } 
 -----------------------------------------------------------------------
 
-### Top 15 most common items in each department
+### Top 15 Most Common Items by Department
 
 ```{r}
 
@@ -88,58 +90,44 @@ ggplotly(barplot_product)
 ```
 
 
-### Neighborhood popularity
+### Number of Days Since Last Order
 
 ```{r}
-
-x <- list(
-  title = "",
-  tickangle = 40,
-  tickfont = list(
-    size = 8  
-  )
-)
-
-y <- list(
-  title = "number of listings"
-)
-
 
 renderPlotly({
-  airbnb_data %>% 
-        filter(boro == input$boro_choice, 
-           price %in% input$price_range[1]:input$price_range[2],
-           room_type == input$room_choice) %>%
-    count(neighbourhood) %>% 
-    mutate(neighbourhood = fct_reorder(neighbourhood, n)) %>% 
-    plot_ly(x = ~neighbourhood, y = ~n, color = ~neighbourhood, type = "bar") %>%
-      layout(xaxis = x, yaxis = y)
-})
-```
+  
+histogram_last_order = instacart %>%
+    filter(department == input$department_choice, 
+           order_hour_of_day <= input$time_day[2],
+           order_hour_of_day >= input$time_day[1]) %>%
+    ggplot(aes(days_since_prior_order, ..density.., color = aisle)) + geom_freqpoly() 
 
-### Prices for most popular neighborhoods
-
-```{r}
-renderPlotly({ 
-  common_neighborhoods =
-    airbnb_data %>% 
-    filter(boro == input$boro_choice,
-           price %in% input$price_range[1]:input$price_range[2],
-           room_type == input$room_choice) %>%
-    count(neighbourhood, sort = TRUE) %>% 
-    top_n(8) %>% 
-    select(neighbourhood)
-
-  airbnb_data %>%
-    filter(boro == input$boro_choice,
-                          price %in% input$price_range[1]:input$price_range[2],
-                          room_type == input$room_choice) %>%
-    inner_join(., common_neighborhoods, by = "neighbourhood") %>% 
-    plot_ly(y = ~price, color = ~neighbourhood, type = "box",
-          colors = "Set2") %>%
-    layout(xaxis = x)
+ggplotly(histogram_last_order)
   
 })
+
+```
+
+### Distribution of Number of Reordered Items 
+
+```{r}
+
+renderPlotly({
+
+boxplot_reordered = instacart %>%
+    filter(department == input$department_choice, 
+           order_hour_of_day <= input$time_day[2],
+           order_hour_of_day >= input$time_day[1]) %>%
+    group_by(aisle, product_name) %>% 
+    mutate(n_reordered = sum(reordered)) %>% 
+    ggplot(aes(x = aisle, y = n_reordered, color = aisle)) +
+      geom_boxplot() +
+      theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    
+ggplotly(boxplot_reordered)
+
+})
+
 
 ```
 
