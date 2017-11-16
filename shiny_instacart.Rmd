@@ -63,7 +63,7 @@ max_hour = instacart %>% distinct(order_hour_of_day) %>% max()
 
 # sliderInput widget
 sliderInput("time_day", label = h3("Choose hour of the day"), min = min_hour, 
-        max = max_hour, value = c(10, 18), step = 1)
+        max = max_hour, value = c(10, 17), step = 1)
 
 
 ```
