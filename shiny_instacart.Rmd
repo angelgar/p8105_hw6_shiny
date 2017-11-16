@@ -30,6 +30,8 @@ library(shiny)
 
 ```{r import_data}
 
+# Read in the data
+
 instacart = read_csv("./data/instacart_train_data.csv.zip") %>%
   clean_names() %>%
   distinct()
@@ -45,6 +47,8 @@ The data come from the [Instacart Dataset](http://jeffgoldsmith.com/DSI/dataset_
 
 ```{r}
 
+# Create lists of departments
+ 
 departments = instacart %>%
                 distinct(department) %>%
                 pull()
@@ -53,10 +57,11 @@ departments = instacart %>%
 selectInput("department_choice", label = h3("Select Department"),
             choices = departments, selected = "produce")
 
-# sliderInput widget
+# set min and max hour of the day
 min_hour = instacart %>% distinct(order_hour_of_day) %>% min()
 max_hour = instacart %>% distinct(order_hour_of_day) %>% max()
-  
+
+# sliderInput widget
 sliderInput("time_day", label = h3("Choose hour of the day"), min = min_hour, 
         max = max_hour, value = c(10, 18), step = 1)
 
@@ -70,9 +75,14 @@ Row {.tabset .tabset-fade }
 
 ```{r}
 
+# Barplot of most common items by department
+
 renderPlotly({
   
-barplot_product <- instacart %>%
+  # Filter by department and time of the day and count and subset for top 15 items
+  # Plot using ggplot and ggplotly
+  
+  barplot_product <- instacart %>%
                     filter(department == input$department_choice, 
                            order_hour_of_day <= input$time_day[2],
                            order_hour_of_day >= input$time_day[1]) %>%
@@ -96,7 +106,10 @@ ggplotly(barplot_product)
 
 renderPlotly({
   
-histogram_last_order = instacart %>%
+  # Filter by department and time of the day
+  # Plot density of days since last order using ggplot and ggplotly
+  
+  histogram_last_order = instacart %>%
     filter(department == input$department_choice, 
            order_hour_of_day <= input$time_day[2],
            order_hour_of_day >= input$time_day[1]) %>%
@@ -113,14 +126,17 @@ ggplotly(histogram_last_order)
 ```{r}
 
 renderPlotly({
-
-boxplot_reordered = instacart %>%
+  
+  # Filter by department and time of the day
+  # Plot distribution of reordered items 
+  
+  boxplot_reordered = instacart %>%
     filter(department == input$department_choice, 
            order_hour_of_day <= input$time_day[2],
            order_hour_of_day >= input$time_day[1]) %>%
     group_by(aisle, product_name) %>% 
     mutate(n_reordered = sum(reordered)) %>% 
-    ggplot(aes(x = aisle, y = n_reordered, color = aisle)) +
+    ggplot(aes(x = aisle, y = n_reordered, fill = aisle)) +
       geom_boxplot() +
       theme(axis.text.x = element_text(angle = 90, hjust = 1))
     
